@@ -1,0 +1,191 @@
+{
+  "schemaVersion": 2,
+  "requires": [
+    "auth-modes",
+    "prepare",
+    "response-conditions"
+  ],
+  "permissions": {
+    "network": [
+      "www.beeimg.cn"
+    ],
+    "readSelectedFile": true,
+    "allowInsecureHttp": false
+  },
+  "config": [],
+  "authModes": [
+    {
+      "id": "guest",
+      "label": "游客（不登录）",
+      "config": [],
+      "prepare": [
+        {
+          "id": "guestGroup",
+          "method": "GET",
+          "url": "https://www.beeimg.cn/api/v2/group",
+          "headers": {
+            "Accept": "application/json"
+          },
+          "response": {
+            "successStatuses": [
+              200
+            ],
+            "success": {
+              "path": "status",
+              "equals": "success"
+            },
+            "exports": {
+              "storageId": {
+                "path": "data.storages[0].id",
+                "type": "number",
+                "required": true
+              }
+            }
+          },
+          "timeoutSeconds": 30
+        }
+      ],
+      "upload": {
+        "method": "POST",
+        "url": "https://www.beeimg.cn/api/v2/upload",
+        "headers": {
+          "Accept": "application/json"
+        },
+        "body": {
+          "type": "multipart",
+          "fileField": "file",
+          "fields": {
+            "storage_id": "${steps.guestGroup.storageId}"
+          }
+        },
+        "response": {
+          "url": "data.public_url",
+          "successStatuses": [
+            200
+          ],
+          "success": {
+            "path": "status",
+            "equals": "success"
+          },
+          "errorMessage": "message"
+        },
+        "followRedirects": false,
+        "timeoutSeconds": 120,
+        "errors": {
+          "401": "接口鉴权失败",
+          "403": "上传被拒绝，可能超出游客限额",
+          "422": "上传参数被拒绝，请检查图片格式或大小",
+          "429": "上传过于频繁，请稍后再试"
+        }
+      }
+    },
+    {
+      "id": "token",
+      "label": "账号（访问令牌）",
+      "config": [
+        {
+          "key": "token",
+          "label": "访问令牌",
+          "type": "secret",
+          "role": "token",
+          "required": true
+        }
+      ],
+      "prepare": [
+        {
+          "id": "account",
+          "method": "GET",
+          "url": "https://www.beeimg.cn/api/v2/user/profile",
+          "headers": {
+            "Accept": "application/json",
+            "Authorization": "Bearer ${config.token}"
+          },
+          "response": {
+            "successStatuses": [
+              200
+            ],
+            "success": {
+              "path": "status",
+              "equals": "success"
+            },
+            "exports": {
+              "accountId": {
+                "path": "data.id",
+                "type": "number",
+                "required": false,
+                "secret": false
+              }
+            },
+            "errorMessage": "message"
+          },
+          "timeoutSeconds": 30,
+          "errors": {
+            "401": "访问令牌无效或已过期，请重新生成",
+            "403": "令牌缺少权限，请勾选 user:profile:read 与 upload:write"
+          }
+        },
+        {
+          "id": "accountGroup",
+          "method": "GET",
+          "url": "https://www.beeimg.cn/api/v2/group",
+          "headers": {
+            "Accept": "application/json",
+            "Authorization": "Bearer ${config.token}"
+          },
+          "response": {
+            "successStatuses": [
+              200
+            ],
+            "success": {
+              "path": "status",
+              "equals": "success"
+            },
+            "exports": {
+              "storageId": {
+                "path": "data.storages[0].id",
+                "type": "number",
+                "required": true
+              }
+            },
+            "errorMessage": "message"
+          },
+          "timeoutSeconds": 30
+        }
+      ],
+      "upload": {
+        "method": "POST",
+        "url": "https://www.beeimg.cn/api/v2/upload",
+        "headers": {
+          "Accept": "application/json",
+          "Authorization": "Bearer ${config.token}"
+        },
+        "body": {
+          "type": "multipart",
+          "fileField": "file",
+          "fields": {
+            "storage_id": "${steps.accountGroup.storageId}"
+          }
+        },
+        "response": {
+          "url": "data.public_url",
+          "successStatuses": [
+            200
+          ],
+          "success": {
+            "path": "status",
+            "equals": "success"
+          },
+          "errorMessage": "message"
+        },
+        "followRedirects": false,
+        "timeoutSeconds": 120,
+        "errors": {
+          "401": "访问令牌无效或已过期，请重新生成",
+          "403": "没有上传权限，请检查令牌权限",
+          "422": "上传参数被拒绝，请检查图片格式或大小",
+          "429": "上传过于频繁，请稍后再试"
+        }
+      }
+    }
+  ]
+}

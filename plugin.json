@@ -1,0 +1,14 @@
+{
+  "packageVersion": 1,
+  "runtime": "http-v2",
+  "entry": "uploader.json",
+  "id": "io.github.enddreamzm.picora.beeimg",
+  "name": "蜜蜂图床",
+  "version": "1.1.0",
+  "description": "蜜蜂图床上传：默认游客免登录，可选填写访问令牌永久保存。",
+  "author": "ENDDREAM",
+  "repository": "https://github.com/ENDDREAM-ZM/picora-plugin-beeimg",
+  "icon": "assets/icon.svg",
+  "mark": "蜂",
+  "color": "#F5B301"
+}
